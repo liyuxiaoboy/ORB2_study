@@ -1,0 +1,11 @@
+.yaml
+# ORB Extractor: Number of features per image
+ORBextractor.nFeatures: 2000
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast			
+ORBextractor.iniThFAST: 5
+ORBextractor.minThFAST: 1
+参数的选取将很大程度上影响效果 h特别死orbhnn特征点尽量多选
