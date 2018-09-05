@@ -8,4 +8,4 @@ ORBextractor.nFeatures: 2000
 # You can lower these values if your images have low contrast			
 ORBextractor.iniThFAST: 5
 ORBextractor.minThFAST: 1
-参数的选取将很大程度上影响效果 h特别死orbhnn特征点尽量多选
+参数的选取将很大程度上影响效果 特别是orb特征点尽量多选
