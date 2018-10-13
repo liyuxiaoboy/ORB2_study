@@ -1,0 +1,44 @@
+//加载
+LoadImages(strFile, vstrImageFilenames, vTimestamps);
+//创建一个SLAM系统 用传入参数初始化
+ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+    //tracking线程（主线程）
+      mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+                  mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+    //local mapping线程
+      mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
+      mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
+    //loopclosing线程
+      mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
+      mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+    //三个线程互相留个接口
+      mpTracker->SetLocalMapper(mpLocalMapper);
+      mpTracker->SetLoopClosing(mpLoopCloser);
+
+      mpLocalMapper->SetTracker(mpTracker);
+      mpLocalMapper->SetLoopCloser(mpLoopCloser);
+
+      mpLoopCloser->SetTracker(mpTracker);
+      mpLoopCloser->SetLocalMapper(mpLocalMapper);
+
+//主循环
+for(int ni=0;ni<nImages;i++)
+{
+//调用追踪线程
+SLAM.TrackMonocular(im,tframe);
+    //帧操作
+      //锁住线程做三个检查
+      unique_lock<mutex> lock(mMutexMode);
+      if(mbActivateLocalizationMode)
+      if(mbDeactivateLocalizationMode)
+      if(mbReset)
+      //处理单目
+      cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+      //刷新追踪状态，地图点，关键帧点
+      mTrackingState = mpTracker->mState;
+      mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
+      mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
+}
+//结束所有线程
+SLAM.Shutdown();
