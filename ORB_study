@@ -1,44 +1,88 @@
 //加载
 LoadImages(strFile, vstrImageFilenames, vTimestamps);
+
 //创建一个SLAM系统 用传入参数初始化
 ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+
     //tracking线程（主线程）
-      mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                   mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+        //设置内参，相机帧率，特征点数，金字塔尺度信息，金字塔层数，最小FAST数和初始数，初始化ORB句柄
+                  
     //local mapping线程
-      mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
-      mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
+    mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
+    mptLocalMapping = new thread(&ORB_SLAM2::LocalMapping::Run,mpLocalMapper);
+    
     //loopclosing线程
-      mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
-      mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+    mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
+    mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+    
     //三个线程互相留个接口
-      mpTracker->SetLocalMapper(mpLocalMapper);
-      mpTracker->SetLoopClosing(mpLoopCloser);
+    mpTracker->SetLocalMapper(mpLocalMapper);
+    mpTracker->SetLoopClosing(mpLoopCloser);
 
-      mpLocalMapper->SetTracker(mpTracker);
-      mpLocalMapper->SetLoopCloser(mpLoopCloser);
+    mpLocalMapper->SetTracker(mpTracker);
+    mpLocalMapper->SetLoopCloser(mpLoopCloser);
 
-      mpLoopCloser->SetTracker(mpTracker);
-      mpLoopCloser->SetLocalMapper(mpLocalMapper);
+    mpLoopCloser->SetTracker(mpTracker);
+    mpLoopCloser->SetLocalMapper(mpLocalMapper);
 
 //主循环
 for(int ni=0;ni<nImages;i++)
 {
 //调用追踪线程
 SLAM.TrackMonocular(im,tframe);
-    //帧操作
-      //锁住线程做三个检查
-      unique_lock<mutex> lock(mMutexMode);
-      if(mbActivateLocalizationMode)
-      if(mbDeactivateLocalizationMode)
-      if(mbReset)
-      //处理单目
-      cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
-      //刷新追踪状态，地图点，关键帧点
-      mTrackingState = mpTracker->mState;
-      mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-      mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
 
+    //帧操作
+    //锁住线程做三个检查
+    unique_lock<mutex> lock(mMutexMode);
+    if(mbActivateLocalizationMode)
+    if(mbDeactivateLocalizationMode)
+    if(mbReset)
+    
+    //处理单目传入图片和时间戳
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+        //图片转灰度图
+        cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+        
+        //判断当前状态
+        if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
+        //这两个其实本质没啥区别，只是初始化的ORB特征点会多提取一倍，设置当前帧
+        mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        else
+        mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+            //调用Frame建立帧
+            //提取ORB
+            ExtractORB(0,imGray);
+            //处理畸变
+            UndistortKeyPoints();
+            //只有当初始化时候进行以下步骤
+                //计算图像边界，设置一些参数
+                ComputeImageBounds(imGray);
+                //
+                AssignFeaturesToGrid();
+        
+        //追踪
+        Track();
+        //状态设置，从未设置图片的话先初始化
+        if(mState==NO_IMAGES_YET)
+            {
+                mState = NOT_INITIALIZED;
+            }
+        //初始化
+        MonocularInitialization();
+        //更新
+        mpFrameDrawer->Update(this);
+        //重置状态标量
+        if(mState!=OK)
+            return;
+
+            
+        
+    //刷新追踪状态，地图点，关键帧点
+    mTrackingState = mpTracker->mState;
+    mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
+    mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
 }
 //结束所有线程
 SLAM.Shutdown();
