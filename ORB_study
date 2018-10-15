@@ -64,7 +64,7 @@ SLAM.TrackMonocular(im,tframe);
         
         //追踪
         Track();
-        //状态设置，从未设置图片的话先初始化
+        //1*状态设置，从未设置图片的话先初始化
         if(mState==NO_IMAGES_YET)
             {
                 mState = NOT_INITIALIZED;
@@ -76,6 +76,9 @@ SLAM.TrackMonocular(im,tframe);
         //重置状态标量
         if(mState!=OK)
             return;
+            
+        //2*已经初始化过了
+        
 
             
         
