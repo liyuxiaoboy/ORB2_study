@@ -1,3 +1,5 @@
+./Examples/Monocular/mono_tum Vocabulary/ORBvoc.txt Examples/Monocular/TUM1.yaml ~/dataset/rgbd_dataset_freiburg1_desk
+
 cd ORB_SLAM2-master/Examples/catkin/
 source devel/setup.bash
 rosrun orb_origin Mono ../../Vocabulary/ORBvoc.txt mycam.yaml
