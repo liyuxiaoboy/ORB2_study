@@ -1,2 +1,4 @@
-~/ORB_SLAM2-master/Examples/catkin$ rosrun orb_origin Mono ../../Vocabulary/ORBvoc.txt mycam.yaml
-~$ rosrun uvc_camera uvc_camera_node
+cd ORB_SLAM2-master/Examples/catkin/
+source devel/setup.bash
+rosrun orb_origin Mono ../../Vocabulary/ORBvoc.txt mycam.yaml
+rosrun uvc_camera uvc_camera_node
