@@ -1,11 +1,15 @@
 ./Examples/Monocular/mono_tum Vocabulary/ORBvoc.txt Examples/Monocular/TUM1.yaml ~/dataset/rgbd_dataset_freiburg1_desk
 
+//rosrun in mono
 cd ORB_SLAM2-master/Examples/catkin/
 source devel/setup.bash
 rosrun orb_origin Mono ../../Vocabulary/ORBvoc.txt mycam.yaml
 
-//
+//rosrun camera
 rosrun uvc_camera uvc_camera_node
 
-source roswork/usb_cam/devel/setup.bash ^C
+source roswork/usb_cam/devel/setup.bash 
 rosrun usb_cam usb_cam_node 
+
+//rosrun in RGBD
+rosrun orb_origin RGBD /home/yxli/ORB_SLAM2-master/Vocabulary/ORBvoc.txt /home/yxli/ORB_SLAM2-master/Examples/RGB-D/TUM1.yaml
